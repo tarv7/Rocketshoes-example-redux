@@ -1,112 +1,75 @@
-import React from 'react';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
 import { MdShoppingCart } from 'react-icons/md';
+import { formatPrice } from '../../util/format';
+import api from '../../services/api';
+
+import * as CartActions from '../../store/modules/cart/actions';
 
 import { ProductList } from './styles';
 
-export default function Home() {
-  return (
-    <ProductList>
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-adidas-lite-racer-cln-masculino/12/COL-7070-012/COL-7070-012_zoom2.jpg?ts=1584624042&ims=326x"
-          alt="Tênis"
-        />
-        <strong>Tênis muito legal</strong>
-        <span>R$129,90</span>
+class Home extends Component {
+  state = {
+    products: [],
+  };
 
-        <button type="button">
-          <div>
-            <MdShoppingCart size={16} color="#FFF" /> 3
-          </div>
+  async componentDidMount() {
+    const response = await api.get('products');
 
-          <span>ADICIONAR AO CARRINHO</span>
-        </button>
-      </li>
+    const data = response.data.map((product) => ({
+      ...product,
+      priceFormatted: formatPrice(product.price),
+    }));
 
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-adidas-lite-racer-cln-masculino/12/COL-7070-012/COL-7070-012_zoom2.jpg?ts=1584624042&ims=326x"
-          alt="Tênis"
-        />
-        <strong>Tênis muito legal</strong>
-        <span>R$129,90</span>
+    this.setState({ products: data });
+  }
 
-        <button type="button">
-          <div>
-            <MdShoppingCart size={16} color="#FFF" /> 3
-          </div>
+  handleAddProduct = (product) => {
+    const { addToCart } = this.props;
 
-          <span>ADICIONAR AO CARRINHO</span>
-        </button>
-      </li>
+    addToCart(product);
+  };
 
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-adidas-lite-racer-cln-masculino/12/COL-7070-012/COL-7070-012_zoom2.jpg?ts=1584624042&ims=326x"
-          alt="Tênis"
-        />
-        <strong>Tênis muito legal</strong>
-        <span>R$129,90</span>
+  render() {
+    const { products } = this.state;
+    const { amount } = this.props;
 
-        <button type="button">
-          <div>
-            <MdShoppingCart size={16} color="#FFF" /> 3
-          </div>
+    return (
+      <ProductList>
+        {products.map((product) => (
+          <li key={product.id}>
+            <img src={product.image} alt={product.title} />
+            <strong>{product.title}</strong>
+            <span>{product.priceFormatted}</span>
 
-          <span>ADICIONAR AO CARRINHO</span>
-        </button>
-      </li>
+            <button
+              type="button"
+              onClick={() => this.handleAddProduct(product)}
+            >
+              <div>
+                <MdShoppingCart size={16} color="#FFF" />{' '}
+                {amount[product.id] || 0}
+              </div>
 
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-adidas-lite-racer-cln-masculino/12/COL-7070-012/COL-7070-012_zoom2.jpg?ts=1584624042&ims=326x"
-          alt="Tênis"
-        />
-        <strong>Tênis muito legal</strong>
-        <span>R$129,90</span>
-
-        <button type="button">
-          <div>
-            <MdShoppingCart size={16} color="#FFF" /> 3
-          </div>
-
-          <span>ADICIONAR AO CARRINHO</span>
-        </button>
-      </li>
-
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-adidas-lite-racer-cln-masculino/12/COL-7070-012/COL-7070-012_zoom2.jpg?ts=1584624042&ims=326x"
-          alt="Tênis"
-        />
-        <strong>Tênis muito legal</strong>
-        <span>R$129,90</span>
-
-        <button type="button">
-          <div>
-            <MdShoppingCart size={16} color="#FFF" /> 3
-          </div>
-
-          <span>ADICIONAR AO CARRINHO</span>
-        </button>
-      </li>
-
-      <li>
-        <img
-          src="https://static.netshoes.com.br/produtos/tenis-adidas-lite-racer-cln-masculino/12/COL-7070-012/COL-7070-012_zoom2.jpg?ts=1584624042&ims=326x"
-          alt="Tênis"
-        />
-        <strong>Tênis muito legal</strong>
-        <span>R$129,90</span>
-
-        <button type="button">
-          <div>
-            <MdShoppingCart size={16} color="#FFF" /> 3
-          </div>
-
-          <span>ADICIONAR AO CARRINHO</span>
-        </button>
-      </li>
-    </ProductList>
-  );
+              <span>ADICIONAR AO CARRINHO</span>
+            </button>
+          </li>
+        ))}
+      </ProductList>
+    );
+  }
 }
+
+const mapStateToProps = (state) => ({
+  amount: state.cart.reduce((amount, product) => {
+    amount[product.id] = product.amount;
+
+    return amount;
+  }, {}),
+});
+
+const mapDispatchToProps = (dispatch) =>
+  bindActionCreators(CartActions, dispatch);
+
+export default connect(mapStateToProps, mapDispatchToProps)(Home);
